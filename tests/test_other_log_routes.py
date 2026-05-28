@@ -13,7 +13,6 @@ the real Avro schemas from disk, covering:
 from __future__ import annotations
 
 import json
-import uuid
 from pathlib import Path
 from typing import Any, Dict
 from unittest.mock import MagicMock
@@ -30,7 +29,10 @@ SCHEMAS_DIR = Path(__file__).parent.parent / "schemas"
 
 
 def _load_schema(filename: str):
-    from pipeline.utils.schema_registry import SchemaRegistryClient, _strip_non_avro_keys
+    from pipeline.utils.schema_registry import (
+        SchemaRegistryClient,
+        _strip_non_avro_keys,
+    )
 
     raw = json.loads((SCHEMAS_DIR / filename).read_text())
     clean = _strip_non_avro_keys(raw)
@@ -246,7 +248,9 @@ class TestBatchLogRoute:
         assert result["project_id"] == "my-project"
 
     def test_round_trip(self):
-        result = _round_trip("batch_prediction", "vertex_batch_log.avsc", BATCH_AUDIT_ENTRY)
+        result = _round_trip(
+            "batch_prediction", "vertex_batch_log.avsc", BATCH_AUDIT_ENTRY
+        )
         assert result["payload"]["batch_job_id"] == "7890"
         assert result["payload"]["batch_job_name"] == "daily-churn-batch-run"
         assert result["payload"]["job_state"] == "JOB_STATE_RUNNING"
@@ -259,7 +263,10 @@ class TestBatchLogRoute:
 
         sparse = {
             "insertId": "sparse-batch",
-            "resource": {"type": "aiplatform.googleapis.com/BatchPredictionJob", "labels": {}},
+            "resource": {
+                "type": "aiplatform.googleapis.com/BatchPredictionJob",
+                "labels": {},
+            },
             "timestamp": "2026-05-20T10:00:00Z",
             "severity": "INFO",
             "logName": "projects/p/logs/activity",
@@ -476,11 +483,21 @@ class TestMapperRegistry:
     def test_all_four_types_have_mappers(self):
         from pipeline.utils.log_type_mappers import get_mapper
 
-        for log_type in ("online_prediction", "batch_prediction", "monitoring", "training"):
+        for log_type in (
+            "online_prediction",
+            "batch_prediction",
+            "monitoring",
+            "training",
+        ):
             assert get_mapper(log_type) is not None
 
     def test_all_four_types_have_subjects(self):
         from pipeline.utils.log_type_mappers import get_subject
 
-        for log_type in ("online_prediction", "batch_prediction", "monitoring", "training"):
+        for log_type in (
+            "online_prediction",
+            "batch_prediction",
+            "monitoring",
+            "training",
+        ):
             assert get_subject(log_type) is not None

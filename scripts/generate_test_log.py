@@ -777,8 +777,6 @@ def write_to_cloud_logging(entries: list, project_id: str) -> None:
         For audit-log-based types, use ``generate-test-log-*`` to publish
         synthetic entries directly to Pub/Sub instead.
     """
-    import urllib.parse
-
     from google.api_core.exceptions import PermissionDenied
     from google.cloud import logging as gcloud_logging
     from google.cloud.logging_v2.resource import Resource

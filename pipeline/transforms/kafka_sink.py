@@ -13,7 +13,6 @@ Reference:
 from __future__ import annotations
 
 import logging
-import traceback
 from typing import Iterator, Tuple
 
 import apache_beam as beam
@@ -43,6 +42,7 @@ def _make_oauth_cb():
     All imports are local so the function is safe to use inside a Beam DoFn
     that gets serialised and re-imported on worker subprocesses.
     """
+
     def _oauth_cb(config_str):  # config_str = sasl.oauthbearer.config value (unused)
         import base64
         import datetime
@@ -80,16 +80,22 @@ def _make_oauth_cb():
         # ── Build the Google Managed Kafka GOOG_OAUTH2_TOKEN format ──────────
         def _b64url(s: str) -> str:
             """URL-safe base64 without padding."""
-            return base64.urlsafe_b64encode(s.encode("utf-8")).decode("utf-8").rstrip("=")
+            return (
+                base64.urlsafe_b64encode(s.encode("utf-8")).decode("utf-8").rstrip("=")
+            )
 
         header_b64 = _b64url(json.dumps({"typ": "JWT", "alg": "GOOG_OAUTH2_TOKEN"}))
-        claims_b64 = _b64url(json.dumps({
-            "exp": expiry_ts,
-            "iss": "Google",
-            "iat": time.time(),
-            "scope": "kafka",
-            "sub": sa_email,
-        }))
+        claims_b64 = _b64url(
+            json.dumps(
+                {
+                    "exp": expiry_ts,
+                    "iss": "Google",
+                    "iat": time.time(),
+                    "scope": "kafka",
+                    "sub": sa_email,
+                }
+            )
+        )
         token_b64 = _b64url(creds.token or "")
 
         kafka_token = f"{header_b64}.{claims_b64}.{token_b64}"
@@ -131,17 +137,19 @@ class KafkaAvroWriteFn(beam.DoFn):
         """Called once per worker instance — initialise the confluent-kafka Producer."""
         from confluent_kafka import Producer
 
-        self._producer = Producer({
-            "bootstrap.servers": self._bootstrap_servers,
-            "security.protocol": "SASL_SSL",
-            "sasl.mechanisms": "OAUTHBEARER",
-            "oauth_cb": _make_oauth_cb(),
-            # Durability: wait for all in-sync replicas before ack
-            "acks": "all",
-            # Batching for throughput
-            "linger.ms": 50,
-            "batch.size": 65536,
-        })
+        self._producer = Producer(
+            {
+                "bootstrap.servers": self._bootstrap_servers,
+                "security.protocol": "SASL_SSL",
+                "sasl.mechanisms": "OAUTHBEARER",
+                "oauth_cb": _make_oauth_cb(),
+                # Durability: wait for all in-sync replicas before ack
+                "acks": "all",
+                # Batching for throughput
+                "linger.ms": 50,
+                "batch.size": 65536,
+            }
+        )
         logger.info(
             "confluent-kafka Producer initialised → %s / topic=%s",
             self._bootstrap_servers,

@@ -121,7 +121,9 @@ class SchemaRegistryClient:
             payload["references"] = references
 
         url = f"{self._base_url}/subjects/{subject}/versions"
-        resp = self._session.post(url, json=payload, headers=self._headers(), timeout=30)
+        resp = self._session.post(
+            url, json=payload, headers=self._headers(), timeout=30
+        )
         if resp.status_code not in (200, 201):
             raise SchemaRegistryError(
                 f"register_schema failed [{resp.status_code}]: {resp.text}"

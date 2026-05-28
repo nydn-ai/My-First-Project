@@ -241,16 +241,22 @@ def consume(
         )
 
         def _b64url(s: str) -> str:
-            return base64.urlsafe_b64encode(s.encode("utf-8")).decode("utf-8").rstrip("=")
+            return (
+                base64.urlsafe_b64encode(s.encode("utf-8")).decode("utf-8").rstrip("=")
+            )
 
         header_b64 = _b64url(json.dumps({"typ": "JWT", "alg": "GOOG_OAUTH2_TOKEN"}))
-        claims_b64 = _b64url(json.dumps({
-            "exp": expiry_ts,
-            "iss": "Google",
-            "iat": _time.time(),
-            "scope": "kafka",
-            "sub": sa_email,
-        }))
+        claims_b64 = _b64url(
+            json.dumps(
+                {
+                    "exp": expiry_ts,
+                    "iss": "Google",
+                    "iat": _time.time(),
+                    "scope": "kafka",
+                    "sub": sa_email,
+                }
+            )
+        )
         token_b64 = _b64url(creds.token or "")
 
         kafka_token = f"{header_b64}.{claims_b64}.{token_b64}"
@@ -272,15 +278,17 @@ def consume(
         max_messages,
     )
 
-    consumer = Consumer({
-        "bootstrap.servers": bootstrap_servers,
-        "security.protocol": "SASL_SSL",
-        "sasl.mechanisms": "OAUTHBEARER",
-        "oauth_cb": _oauth_cb,
-        "group.id": group_id,
-        "auto.offset.reset": auto_offset,
-        "enable.auto.commit": True,
-    })
+    consumer = Consumer(
+        {
+            "bootstrap.servers": bootstrap_servers,
+            "security.protocol": "SASL_SSL",
+            "sasl.mechanisms": "OAUTHBEARER",
+            "oauth_cb": _oauth_cb,
+            "group.id": group_id,
+            "auto.offset.reset": auto_offset,
+            "enable.auto.commit": True,
+        }
+    )
     consumer.subscribe([topic])
 
     count = 0
