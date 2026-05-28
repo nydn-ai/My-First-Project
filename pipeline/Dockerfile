@@ -21,10 +21,6 @@ RUN pip install --no-cache-dir --no-deps ./pipeline
 ENV FLEX_TEMPLATE_PYTHON_PY_FILE="/app/pipeline/main.py"
 ENV FLEX_TEMPLATE_PYTHON_SETUP_FILE="/app/pipeline/setup.py"
 
-RUN python - <<'PY'
-import pipeline.main
-from pipeline.transforms.kafka_sink import WriteToKafkaAvro
-print("Import health check OK")
-PY
+RUN python -c "import pipeline.main; from pipeline.transforms.kafka_sink import WriteToKafkaAvro; print('Import health check OK')"
 
 ENTRYPOINT ["/opt/google/dataflow/python_template_launcher"]
