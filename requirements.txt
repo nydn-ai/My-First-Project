@@ -1,0 +1,61 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Vertex ML Logs — Dataflow Flex Template runtime dependencies
+#
+# Installed into: apache/beam_python3.11_sdk (Dockerfile base image)
+# Also used for: local dev / CI when installed via `pip install -r requirements.txt`
+#
+# Version constraints rationale:
+#   apache-beam[gcp]==2.56.0 requires:
+#     fastavro >=1.2.0,<2             → 1.10.0 ✓
+#     google-auth >=1.18.0,<3         → 2.39.0 ✓
+#     google-auth-httplib2 >=0.1.0    → 0.2.0 ✓
+#     google-cloud-pubsub >=2.18.4,<3 → 2.21.1 ✓
+#     google-cloud-storage >=2.14.0,<3 → 2.16.0 ✓
+#     requests >=2.24.0,<3            → 2.31.0 ✓
+#     protobuf >=3.20.3,!=4.21.x,<5  → satisfied transitively
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Pipeline framework ────────────────────────────────────────────────────────
+# [gcp] extra pulls in: google-cloud-pubsub, google-cloud-storage,
+# google-auth, google-auth-httplib2, grpcio, protobuf, crcmod, and more.
+apache-beam[gcp]==2.56.0
+
+# ── Avro / Schema Registry ────────────────────────────────────────────────────
+# Confluent wire-format serialisation + fastavro schemaless read/write.
+# Used by: schema_registry.py, avro_mapper.py, test_kafka_consumer.py
+fastavro==1.10.0
+
+# ── Kafka — Google Managed Kafka ─────────────────────────────────────────────
+# confluent-kafka ships librdkafka in its binary wheel (no separate C lib
+# install required).  SASL_SSL + OAUTHBEARER is handled by librdkafka via
+# the oauth_cb callback (Google ADC token refresh).
+# Used by: kafka_sink.py (Producer), test_kafka_consumer.py (Consumer)
+confluent-kafka==2.6.1
+
+# ── GCP authentication ────────────────────────────────────────────────────────
+# Application Default Credentials; token refresh in kafka_sink.py oauth_cb
+# and schema_registry.py. google.auth.transport.requests is bundled inside
+# google-auth (not google-auth-httplib2).
+# Used by: kafka_sink.py, schema_registry.py, register_schemas.py
+google-auth==2.39.0
+# HTTP transport adapter used by apache-beam[gcp] internals.
+google-auth-httplib2==0.2.0
+
+# ── GCP services ──────────────────────────────────────────────────────────────
+# Dead-letter queue (DLQ) writes from WriteToDlq DoFn.
+google-cloud-storage==2.16.0
+# ReadFromPubSub source transform; pulled in by apache-beam[gcp] but pinned
+# here for reproducibility and to ensure the version matches beam's requirements.
+google-cloud-pubsub==2.21.1
+
+# ── HTTP client ───────────────────────────────────────────────────────────────
+# Used directly by SchemaRegistryClient (schema fetch + registration) and
+# register_schemas.py. Also provides google.auth.transport.requests.Request.
+requests==2.31.0
+
+# ── GCS checksum acceleration ─────────────────────────────────────────────────
+# crcmod with its C extension makes GCS upload checksumming ~50× faster.
+# The apache/beam_python3.11_sdk base image ships crcmod with the C extension
+# pre-compiled; listing it here ensures non-Dataflow installs (dev, CI) also
+# get the fast path.
+crcmod==1.7

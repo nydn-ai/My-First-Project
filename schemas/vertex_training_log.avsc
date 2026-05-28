@@ -1,0 +1,258 @@
+{
+  "type": "record",
+  "name": "VertexTrainingLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Public schema for Vertex AI training logs delivered to Snowflake and downstream analytics systems.",
+  "x-meta": {
+    "ops_impact": "medium",
+    "data_value": "high",
+    "jira": "ML-123",
+    "owners": {
+      "team_email": "ml-platform@team.bumble.com"
+    },
+    "life_cycle": {
+      "renew_by": "2026-12-31"
+    },
+    "schema_registry": {
+      "compatibility": "backward"
+    },
+    "data_lake": {
+      "retention_days": 365
+    },
+    "capacity_planning": {
+      "doc": "Capacity estimates (not quotas or limits, for planning and monitoring/alerting). Replace -1 placeholders with your best current estimates.",
+      "avg_event_bytes": -1,
+      "max_event_bytes": -1,
+      "avg_events_per_day": -1,
+      "max_events_per_second": -1
+    }
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Unique event identifier."
+    },
+    {
+      "name": "ts",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Canonical event timestamp in milliseconds since epoch."
+    },
+    {
+      "name": "insert_time",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Timestamp when the event was inserted into the streaming pipeline."
+    },
+    {
+      "name": "event_time",
+      "type": ["null", { "type": "long", "logicalType": "timestamp-millis" }],
+      "default": null,
+      "doc": "Original source event timestamp when available."
+    },
+    {
+      "name": "log_name",
+      "type": "string",
+      "doc": "Cloud Logging log name or upstream log stream name."
+    },
+    {
+      "name": "resource_type",
+      "type": "string",
+      "doc": "GCP monitored resource type associated with the log event."
+    },
+    {
+      "name": "resource_labels",
+      "type": { "type": "map", "values": "string" },
+      "default": {},
+      "doc": "Resource label key-value pairs associated with the monitored resource."
+    },
+    {
+      "name": "project_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "GCP project identifier for the source event."
+    },
+    {
+      "name": "location",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Cloud region where the event originated."
+    },
+    {
+      "name": "endpoint_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Vertex AI endpoint identifier associated with the log."
+    },
+    {
+      "name": "model_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Model identifier associated with the event."
+    },
+    {
+      "name": "model_version",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Model version associated with the event."
+    },
+    {
+      "name": "severity",
+      "type": "string",
+      "doc": "Severity level of the log message."
+    },
+    {
+      "name": "trace",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Distributed trace identifier when available."
+    },
+    {
+      "name": "span_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Distributed tracing span identifier when available."
+    },
+    {
+      "name": "insert_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Source log insert identifier when available."
+    },
+    {
+      "name": "payload",
+      "doc": "Training-specific payload describing job execution and result metadata.",
+      "type": {
+        "type": "record",
+        "name": "TrainingPayload",
+        "doc": "Nested training payload with job, infrastructure, and metric information.",
+        "fields": [
+          {
+            "name": "training_job_id",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Training job identifier."
+          },
+          {
+            "name": "training_job_name",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Human-readable training job name."
+          },
+          {
+            "name": "job_state",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Current or terminal state of the training job."
+          },
+          {
+            "name": "worker_pool_id",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Worker pool identifier for the training workload."
+          },
+          {
+            "name": "replica_type",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Replica type used by the training job."
+          },
+          {
+            "name": "machine_type",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Machine type allocated for the training job."
+          },
+          {
+            "name": "accelerator_type",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Accelerator type allocated for the training job."
+          },
+          {
+            "name": "accelerator_count",
+            "type": ["null", "int"],
+            "default": null,
+            "doc": "Number of accelerators allocated to the training job."
+          },
+          {
+            "name": "container_uri",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Container image URI used to execute the training job."
+          },
+          {
+            "name": "args",
+            "type": ["null", { "type": "array", "items": "string" }],
+            "default": null,
+            "doc": "Command-line arguments passed to the training container."
+          },
+          {
+            "name": "hyperparameters",
+            "type": ["null", { "type": "map", "values": "string" }],
+            "default": null,
+            "doc": "Training hyperparameters represented as stringified key-value pairs."
+          },
+          {
+            "name": "metrics",
+            "type": [
+              "null",
+              {
+                "type": "array",
+                "items": {
+                  "type": "record",
+                  "name": "TrainingMetric",
+                  "doc": "Single training metric emitted during or after model training.",
+                  "fields": [
+                    {
+                      "name": "metric_name",
+                      "type": "string",
+                      "doc": "Metric name."
+                    },
+                    {
+                      "name": "metric_value",
+                      "type": ["null", "double"],
+                      "default": null,
+                      "doc": "Numeric metric value when emitted as a number."
+                    },
+                    {
+                      "name": "metric_value_text",
+                      "type": ["null", "string"],
+                      "default": null,
+                      "doc": "Metric value when emitted as a string representation."
+                    }
+                  ]
+                }
+              }
+            ],
+            "default": null,
+            "doc": "Collection of training metrics emitted by the job."
+          },
+          {
+            "name": "artifact_uris",
+            "type": ["null", { "type": "array", "items": "string" }],
+            "default": null,
+            "doc": "Artifact URIs produced by the training job."
+          },
+          {
+            "name": "error_code",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Machine-readable training error code when the job fails."
+          },
+          {
+            "name": "error_message",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Human-readable training error message."
+          }
+        ]
+      }
+    },
+    {
+      "name": "raw_payload_json",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional raw source payload preserved for troubleshooting and replay."
+    }
+  ]
+}

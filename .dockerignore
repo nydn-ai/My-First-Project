@@ -1,0 +1,55 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# .dockerignore — keeps the Docker build context minimal
+#
+# The Dockerfile only needs:
+#   requirements.txt        → pip install
+#   pipeline/               → COPY pipeline/ /pipeline/
+#
+# Everything else is excluded to keep the build context small and avoid
+# accidentally baking in secrets, large binaries, or dev artifacts.
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# CI/CD configs (not needed inside the image)
+cloudbuild.yaml
+cloudbuild-pr.yaml
+Makefile
+
+# Infrastructure / Terraform
+terraform/
+
+# Tests (not shipped in the production image)
+tests/
+conftest.py
+
+# Dev scripts and generated files
+scripts/
+*.sh
+
+# Local dev artifacts
+.last-image-tag
+.pip_packages/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+*.egg-info/
+
+# Docs / IDE
+*.md
+*.rst
+.vscode/
+.idea/
+
+# Docker files (already being used, don't COPY into image)
+pipeline/Dockerfile
+pipeline/.dockerignore

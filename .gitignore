@@ -1,0 +1,54 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Terraform — local state and provider cache (use remote state for shared envs)
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.terraformrc
+terraform.rc
+
+# Docker build artifacts
+.last-image-tag
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+NUL
+
+# Claude session data
+.claude/
+
+# Scratch / copies
+"Makefile copy"
+"Dockerfile copy"
+Makefile\ copy
+pipeline/Dockerfile\ copy
+local_test/

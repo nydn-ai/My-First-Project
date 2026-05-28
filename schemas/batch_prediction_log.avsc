@@ -1,0 +1,49 @@
+{
+  "type": "record",
+  "name": "BatchPredictionLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Vertex AI batch prediction job log.",
+  "fields": [
+    {
+      "name": "common",
+      "type": "com.bumble.avro.ml.vertex.VertexMLLog",
+      "doc": "Shared Vertex ML log fields."
+    },
+    {
+      "name": "job_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Batch prediction job ID."
+    },
+    {
+      "name": "job_state",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Job state, e.g. JOB_STATE_RUNNING, JOB_STATE_SUCCEEDED."
+    },
+    {
+      "name": "model_resource_name",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Full resource name of the model used."
+    },
+    {
+      "name": "input_uri",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "GCS URI of the batch input data."
+    },
+    {
+      "name": "output_uri",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "GCS URI prefix for batch output data."
+    },
+    {
+      "name": "error_message",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Error message if the job failed."
+    }
+  ]
+}

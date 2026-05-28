@@ -1,0 +1,223 @@
+{
+  "type": "record",
+  "name": "VertexMonitoringLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Public schema for Vertex AI monitoring logs delivered to Snowflake and downstream analytics systems.",
+  "x-meta": {
+    "ops_impact": "medium",
+    "data_value": "high",
+    "jira": "ML-123",
+    "owners": {
+      "team_email": "ml-platform@team.bumble.com"
+    },
+    "life_cycle": {
+      "renew_by": "2026-12-31"
+    },
+    "schema_registry": {
+      "compatibility": "backward"
+    },
+    "data_lake": {
+      "retention_days": 365
+    },
+    "capacity_planning": {
+      "doc": "Capacity estimates (not quotas or limits, for planning and monitoring/alerting). Replace -1 placeholders with your best current estimates.",
+      "avg_event_bytes": -1,
+      "max_event_bytes": -1,
+      "avg_events_per_day": -1,
+      "max_events_per_second": -1
+    }
+  },
+  "fields": [
+    {
+      "name": "id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Unique event identifier."
+    },
+    {
+      "name": "ts",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Canonical event timestamp in milliseconds since epoch."
+    },
+    {
+      "name": "insert_time",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Timestamp when the event was inserted into the streaming pipeline."
+    },
+    {
+      "name": "event_time",
+      "type": ["null", { "type": "long", "logicalType": "timestamp-millis" }],
+      "default": null,
+      "doc": "Original source event timestamp when available."
+    },
+    {
+      "name": "log_name",
+      "type": "string",
+      "doc": "Cloud Logging log name or upstream log stream name."
+    },
+    {
+      "name": "resource_type",
+      "type": "string",
+      "doc": "GCP monitored resource type associated with the log event."
+    },
+    {
+      "name": "resource_labels",
+      "type": { "type": "map", "values": "string" },
+      "default": {},
+      "doc": "Resource label key-value pairs associated with the monitored resource."
+    },
+    {
+      "name": "project_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "GCP project identifier for the source event."
+    },
+    {
+      "name": "location",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Cloud region where the event originated."
+    },
+    {
+      "name": "endpoint_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Vertex AI endpoint identifier associated with the log."
+    },
+    {
+      "name": "model_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Model identifier associated with the event."
+    },
+    {
+      "name": "model_version",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Model version associated with the event."
+    },
+    {
+      "name": "severity",
+      "type": "string",
+      "doc": "Severity level of the log message."
+    },
+    {
+      "name": "trace",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Distributed trace identifier when available."
+    },
+    {
+      "name": "span_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Distributed tracing span identifier when available."
+    },
+    {
+      "name": "insert_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Source log insert identifier when available."
+    },
+    {
+      "name": "payload",
+      "doc": "Monitoring payload describing model quality, drift, or alerting measurements.",
+      "type": {
+        "type": "record",
+        "name": "MonitoringPayload",
+        "doc": "Nested monitoring payload with metric and threshold information.",
+        "fields": [
+          {
+            "name": "monitoring_job_id",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Monitoring job identifier."
+          },
+          {
+            "name": "monitoring_job_name",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Human-readable monitoring job name."
+          },
+          {
+            "name": "monitor_type",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Monitoring type such as skew, drift, or alert evaluation."
+          },
+          {
+            "name": "objective_type",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Objective type evaluated by the monitoring job."
+          },
+          {
+            "name": "feature_name",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Feature name associated with the monitoring measurement when applicable."
+          },
+          {
+            "name": "metric_name",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Name of the monitoring metric."
+          },
+          {
+            "name": "metric_value",
+            "type": ["null", "double"],
+            "default": null,
+            "doc": "Numeric value of the monitoring metric."
+          },
+          {
+            "name": "threshold_value",
+            "type": ["null", "double"],
+            "default": null,
+            "doc": "Threshold used to evaluate the monitoring metric."
+          },
+          {
+            "name": "alert_triggered",
+            "type": ["null", "boolean"],
+            "default": null,
+            "doc": "Whether the monitoring metric crossed the configured threshold."
+          },
+          {
+            "name": "baseline_dataset_uri",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Baseline dataset URI used for comparison."
+          },
+          {
+            "name": "target_dataset_uri",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Target dataset URI evaluated by the monitoring job."
+          },
+          {
+            "name": "prediction_log_source",
+            "type": ["null", "string"],
+            "default": null,
+            "doc": "Source used to derive monitored prediction data."
+          },
+          {
+            "name": "window_start",
+            "type": ["null", { "type": "long", "logicalType": "timestamp-millis" }],
+            "default": null,
+            "doc": "Start of the observation window."
+          },
+          {
+            "name": "window_end",
+            "type": ["null", { "type": "long", "logicalType": "timestamp-millis" }],
+            "default": null,
+            "doc": "End of the observation window."
+          }
+        ]
+      }
+    },
+    {
+      "name": "raw_payload_json",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Optional raw source payload preserved for troubleshooting and replay."
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "type": "record",
+  "name": "TrainingLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Vertex AI training job / pipeline log.",
+  "fields": [
+    {
+      "name": "common",
+      "type": "com.bumble.avro.ml.vertex.VertexMLLog",
+      "doc": "Shared Vertex ML log fields."
+    },
+    {
+      "name": "job_name",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Display name of the training job."
+    },
+    {
+      "name": "training_state",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Training job state, e.g. PIPELINE_STATE_RUNNING."
+    },
+    {
+      "name": "framework",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ML framework used, e.g. tensorflow, pytorch."
+    },
+    {
+      "name": "accelerator_type",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Accelerator type, e.g. NVIDIA_TESLA_T4."
+    },
+    {
+      "name": "training_duration_ms",
+      "type": ["null", "long"],
+      "default": null,
+      "doc": "Total training duration in milliseconds."
+    },
+    {
+      "name": "pipeline_job_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Vertex AI Pipeline Job ID if this training was launched via a pipeline."
+    }
+  ]
+}

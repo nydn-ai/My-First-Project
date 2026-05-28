@@ -1,0 +1,173 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Cloud Build — main branch / production deploy
+#
+# Triggered on:
+#   - push to main → deploys to staging (_ENV=stg)
+#   - push of tag v*.*.* → deploys to production (_ENV=prd)
+#
+# Substitutions (set in Cloud Build trigger config):
+#   _REGION              GCP region, e.g. us-east1
+#   _AR_REPO             Artifact Registry repository name
+#   _IMAGE_NAME          Docker image name
+#   _TEMPLATE_BUCKET     GCS bucket for Flex Template spec
+#   _KAFKA_REGISTRY_URL  Schema Registry base URL
+#   _ENV                 stg or prd
+#
+# Package persistence between steps:
+#   Cloud Build steps run in separate containers — only /workspace is shared.
+#   We install Python packages with --prefix=/workspace/.pip_packages so they
+#   land in /workspace (shared) rather than the ephemeral container filesystem.
+#   All Python steps set PYTHONPATH to pick up the installed packages.
+# ──────────────────────────────────────────────────────────────────────────────
+substitutions:
+  _REGION: us-east1
+  _AR_REPO: vertex-ml-logs
+  _IMAGE_NAME: pubsub-to-kafka-avro
+  _TEMPLATE_BUCKET: ${PROJECT_ID}-df-templates-dev
+  _KAFKA_REGISTRY_URL: https://managedkafka.googleapis.com/v1/projects/${PROJECT_ID}/locations/us-east1/schemaRegistries/dev_schema_registry
+  _ENV: stg
+
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+  # PYTHONPATH shared by all Python steps — packages installed by install-deps step
+  env:
+    - PYTHONPATH=/workspace/.pip_packages/lib/python3.11/site-packages
+
+timeout: 1800s
+
+steps:
+  # ── 1. Install Python dependencies into /workspace so they persist ─────────
+  # Each Cloud Build step is a fresh container; only /workspace persists.
+  # --prefix installs packages to /workspace/.pip_packages/lib/python3.11/site-packages
+  # which is then available to all subsequent steps via PYTHONPATH (set in options.env).
+  - id: install-deps
+    name: python:3.11-slim
+    entrypoint: pip
+    args:
+      - install
+      - --no-cache-dir
+      - --prefix=/workspace/.pip_packages
+      - -r
+      - requirements-dev.txt
+    waitFor: ["-"]
+
+  # ── 2. Lint — all parallel, all wait for install ───────────────────────────
+  - id: lint-black
+    name: python:3.11-slim
+    entrypoint: python
+    args: ["-m", "black", "--check", "pipeline/", "scripts/", "tests/"]
+    waitFor: [install-deps]
+
+  - id: lint-isort
+    name: python:3.11-slim
+    entrypoint: python
+    args: ["-m", "isort", "--check", "pipeline/", "scripts/", "tests/"]
+    waitFor: [install-deps]
+
+  - id: lint-flake8
+    name: python:3.11-slim
+    entrypoint: python
+    args:
+      - "-m"
+      - flake8
+      - pipeline/
+      - scripts/
+      - tests/
+      - --max-line-length=110
+    waitFor: [install-deps]
+
+  # ── 3. Tests ───────────────────────────────────────────────────────────────
+  - id: test
+    name: python:3.11-slim
+    entrypoint: python
+    args: ["-m", "pytest", "tests/", "-v", "--tb=short"]
+    waitFor: [lint-black, lint-isort, lint-flake8]
+
+  # ── 4. Docker build ────────────────────────────────────────────────────────
+  # Use bash entrypoint so we can embed a $(date) subshell for BUILD_DATE.
+  # GIT_SHA and BUILD_DATE are baked into image LABEL fields for traceability.
+  - id: docker-build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        docker build \
+          --build-arg GIT_SHA="$SHORT_SHA" \
+          --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA" \
+          -t "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest" \
+          -f pipeline/Dockerfile \
+          .
+    waitFor: [test]
+
+  # ── 5. Push SHA tag and latest tag in parallel ─────────────────────────────
+  # Both tags refer to the same image ID built in the previous step, so they
+  # can be pushed independently without waiting for each other.
+  - id: docker-push-sha
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+    waitFor: [docker-build]
+
+  - id: docker-push-latest
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest
+    waitFor: [docker-build]
+
+  # ── 6. Register Avro schemas ───────────────────────────────────────────────
+  # Idempotent: existing schemas are left untouched; only new/changed schemas
+  # are registered.  Runs after both pushes complete.
+  - id: register-schemas
+    name: python:3.11-slim
+    entrypoint: python
+    args:
+      - scripts/register_schemas.py
+      - --registry_url
+      - ${_KAFKA_REGISTRY_URL}
+    waitFor: [docker-push-sha, docker-push-latest]
+
+  # ── 7. Stage Flex Template spec to GCS ────────────────────────────────────
+  # Points the template spec at the immutable SHA-tagged image so that
+  # re-running an old template always uses the exact build it was staged with.
+  - id: stage-flex-template
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - dataflow
+      - flex-template
+      - build
+      - gs://${_TEMPLATE_BUCKET}/templates/pubsub-to-kafka-avro-${_ENV}.json
+      - --image
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+      - --sdk-language
+      - PYTHON
+      - --metadata-file
+      - pipeline/metadata.json
+      - --project
+      - $PROJECT_ID
+    waitFor: [register-schemas]
+
+  # ── 8. Record the deployed image tag ──────────────────────────────────────
+  # Written to GCS so the `make run-dataflow-job` Makefile target can
+  # reference the exact image that was staged without needing the git hash.
+  - id: write-latest-template-ref
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "$SHORT_SHA" | gsutil cp - \
+          gs://${_TEMPLATE_BUCKET}/templates/latest-image-tag-${_ENV}.txt
+        echo "Deployed image tag: $SHORT_SHA"
+        echo "Template: gs://${_TEMPLATE_BUCKET}/templates/pubsub-to-kafka-avro-${_ENV}.json"
+    waitFor: [stage-flex-template]
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_IMAGE_NAME}:latest

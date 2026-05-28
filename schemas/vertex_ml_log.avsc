@@ -1,0 +1,58 @@
+{
+  "type": "record",
+  "name": "VertexMLLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Common Vertex AI ML log fields shared across all log types.",
+  "fields": [
+    {
+      "name": "id",
+      "type": { "type": "string", "logicalType": "uuid" },
+      "doc": "Generated UUID for deduplication."
+    },
+    {
+      "name": "ts",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Log entry timestamp (epoch ms). Derived from Cloud Logging timestamp field."
+    },
+    {
+      "name": "insert_time",
+      "type": { "type": "long", "logicalType": "timestamp-millis" },
+      "doc": "Time the log entry was received by Cloud Logging (epoch ms). Derived from receiveTimestamp."
+    },
+    {
+      "name": "log_name",
+      "type": "string",
+      "doc": "Cloud Logging logName field, e.g. projects/P/logs/cloudaudit.googleapis.com%2Factivity"
+    },
+    {
+      "name": "resource_type",
+      "type": "string",
+      "doc": "Cloud Logging resource.type, e.g. aiplatform.googleapis.com/Endpoint"
+    },
+    {
+      "name": "endpoint_id",
+      "type": "string",
+      "doc": "Vertex AI endpoint ID. Defaults to 'unknown' when not present."
+    },
+    {
+      "name": "model_id",
+      "type": "string",
+      "doc": "Vertex AI model ID. Defaults to 'unknown' when not present."
+    },
+    {
+      "name": "model_version",
+      "type": "string",
+      "doc": "Vertex AI model version. Defaults to 'unknown' when not present."
+    },
+    {
+      "name": "severity",
+      "type": "string",
+      "doc": "Cloud Logging severity, e.g. NOTICE, INFO, WARNING, ERROR."
+    },
+    {
+      "name": "raw_payload_json",
+      "type": "string",
+      "doc": "Full protoPayload or jsonPayload serialised as JSON string for audit/debug."
+    }
+  ]
+}

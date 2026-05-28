@@ -1,0 +1,56 @@
+{
+  "name": "PubSub to Kafka Avro — Vertex ML Logs",
+  "description": "Reads Cloud Logging entries from a Pub/Sub subscription, maps them to the appropriate Avro schema and publishes to a Google Managed Kafka topic using the Confluent wire format.",
+  "parameters": [
+    {
+      "name": "log_type",
+      "label": "Log Type",
+      "helpText": "Type of Vertex AI log to process. Determines mapper and Avro subject. One of: online_prediction, batch_prediction, monitoring, training.",
+      "regexes": ["^(online_prediction|batch_prediction|monitoring|training)$"],
+      "isOptional": false
+    },
+    {
+      "name": "input_subscription",
+      "label": "Pub/Sub Subscription",
+      "helpText": "Full Pub/Sub subscription path: projects/PROJECT_ID/subscriptions/SUB_NAME.",
+      "regexes": ["^projects/[^/]+/subscriptions/[^/]+$"],
+      "isOptional": false
+    },
+    {
+      "name": "kafka_bootstrap_servers",
+      "label": "Kafka Bootstrap Servers",
+      "helpText": "Comma-separated Kafka bootstrap server(s). For Google Managed Kafka: bootstrap.CLUSTER.REGION.managedkafka.PROJECT.cloud.goog:9092",
+      "isOptional": false
+    },
+    {
+      "name": "kafka_topic",
+      "label": "Kafka Topic",
+      "helpText": "Destination Kafka topic name, e.g. dev-enriched-vertex-logs.",
+      "isOptional": false
+    },
+    {
+      "name": "kafka_registry_url",
+      "label": "Schema Registry URL",
+      "helpText": "Base URL of the Confluent-compatible Schema Registry. For Google Managed Kafka: https://managedkafka.googleapis.com/v1/projects/PROJECT/locations/REGION/schemaRegistries/REGISTRY_ID",
+      "isOptional": false
+    },
+    {
+      "name": "dlq_bucket",
+      "label": "Dead-Letter Queue Bucket",
+      "helpText": "GCS bucket name (without gs://) where failed messages are written.",
+      "isOptional": false
+    },
+    {
+      "name": "window_size_seconds",
+      "label": "Window Size (seconds)",
+      "helpText": "Fixed window size in seconds. Default: 10.",
+      "isOptional": true
+    },
+    {
+      "name": "schema_cache_ttl_seconds",
+      "label": "Schema Cache TTL (seconds)",
+      "helpText": "How long workers cache schemas locally before re-fetching. Default: 300.",
+      "isOptional": true
+    }
+  ]
+}

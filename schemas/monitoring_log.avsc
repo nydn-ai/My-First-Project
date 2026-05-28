@@ -1,0 +1,49 @@
+{
+  "type": "record",
+  "name": "MonitoringLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Vertex AI Model Monitoring alert log.",
+  "fields": [
+    {
+      "name": "common",
+      "type": "com.bumble.avro.ml.vertex.VertexMLLog",
+      "doc": "Shared Vertex ML log fields."
+    },
+    {
+      "name": "monitoring_job_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Model deployment monitoring job ID."
+    },
+    {
+      "name": "alert_type",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Type of monitoring alert, e.g. skew, drift."
+    },
+    {
+      "name": "feature_name",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Feature that triggered the alert."
+    },
+    {
+      "name": "drift_score",
+      "type": ["null", "double"],
+      "default": null,
+      "doc": "Computed drift/skew score."
+    },
+    {
+      "name": "threshold",
+      "type": ["null", "double"],
+      "default": null,
+      "doc": "Alert threshold that was exceeded."
+    },
+    {
+      "name": "drift_detected",
+      "type": ["null", "boolean"],
+      "default": null,
+      "doc": "Whether drift was detected above the threshold."
+    }
+  ]
+}

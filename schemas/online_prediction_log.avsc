@@ -1,0 +1,49 @@
+{
+  "type": "record",
+  "name": "OnlinePredictionLog",
+  "namespace": "com.bumble.avro.ml.vertex",
+  "doc": "Vertex AI online prediction request log.",
+  "fields": [
+    {
+      "name": "common",
+      "type": "com.bumble.avro.ml.vertex.VertexMLLog",
+      "doc": "Shared Vertex ML log fields."
+    },
+    {
+      "name": "request_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Unique prediction request ID."
+    },
+    {
+      "name": "deployed_model_id",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "ID of the DeployedModel that served the prediction."
+    },
+    {
+      "name": "prediction_count",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "Number of predictions returned."
+    },
+    {
+      "name": "latency_ms",
+      "type": ["null", "long"],
+      "default": null,
+      "doc": "Prediction latency in milliseconds."
+    },
+    {
+      "name": "http_status",
+      "type": ["null", "int"],
+      "default": null,
+      "doc": "HTTP response status code."
+    },
+    {
+      "name": "error_code",
+      "type": ["null", "string"],
+      "default": null,
+      "doc": "Error code/message if the prediction failed."
+    }
+  ]
+}

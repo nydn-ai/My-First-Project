@@ -1,0 +1,82 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Cloud Build — PR verification (no push, no deploy)
+#
+# Triggered on: pull_request to main
+#
+# Runs: lint → tests → docker build verify (image stays local, not pushed)
+#
+# Package persistence:
+#   Same --prefix=/workspace/.pip_packages approach as cloudbuild.yaml.
+#   PYTHONPATH is set in options.env so all Python steps pick up installed pkgs.
+# ──────────────────────────────────────────────────────────────────────────────
+options:
+  machineType: E2_HIGHCPU_8
+  logging: CLOUD_LOGGING_ONLY
+  env:
+    - PYTHONPATH=/workspace/.pip_packages/lib/python3.11/site-packages
+
+timeout: 900s
+
+steps:
+  # ── 1. Install Python dependencies into /workspace ─────────────────────────
+  - id: install-deps
+    name: python:3.11-slim
+    entrypoint: pip
+    args:
+      - install
+      - --no-cache-dir
+      - --prefix=/workspace/.pip_packages
+      - -r
+      - requirements-dev.txt
+    waitFor: ["-"]
+
+  # ── 2. Lint — all parallel ─────────────────────────────────────────────────
+  - id: lint-black
+    name: python:3.11-slim
+    entrypoint: python
+    args: ["-m", "black", "--check", "pipeline/", "scripts/", "tests/"]
+    waitFor: [install-deps]
+
+  - id: lint-isort
+    name: python:3.11-slim
+    entrypoint: python
+    args: ["-m", "isort", "--check", "pipeline/", "scripts/", "tests/"]
+    waitFor: [install-deps]
+
+  - id: lint-flake8
+    name: python:3.11-slim
+    entrypoint: python
+    args:
+      - "-m"
+      - flake8
+      - pipeline/
+      - scripts/
+      - tests/
+      - --max-line-length=110
+    waitFor: [install-deps]
+
+  # ── 3. Tests ───────────────────────────────────────────────────────────────
+  - id: test
+    name: python:3.11-slim
+    entrypoint: python
+    args: ["-m", "pytest", "tests/", "-v", "--tb=short"]
+    waitFor: [lint-black, lint-isort, lint-flake8]
+
+  # ── 4. Docker build verify ─────────────────────────────────────────────────
+  # Full build (no --no-cache) so Cloud Build's layer caching keeps PRs fast.
+  # Image is NOT pushed — this step only verifies the Dockerfile is valid and
+  # that all imports pass the health check baked into the image (RUN python -c ...).
+  - id: docker-build-verify
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        set -euo pipefail
+        docker build \
+          --build-arg GIT_SHA="${SHORT_SHA:-pr-verify}" \
+          --build-arg BUILD_DATE="$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+          -f pipeline/Dockerfile \
+          .
+        echo "Docker build succeeded — image health check passed"
+    waitFor: [test]

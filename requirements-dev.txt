@@ -1,0 +1,29 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Vertex ML Logs — development + testing dependencies
+#
+# Includes all production runtime dependencies via -r requirements.txt,
+# then adds tooling for local testing, linting, and dev scripts.
+#
+# Install everything:  pip install -r requirements-dev.txt
+#                      pip install --no-deps -e pipeline/
+# ──────────────────────────────────────────────────────────────────────────────
+
+# All production runtime dependencies (apache-beam[gcp], fastavro,
+# kafka-python, google-auth, google-cloud-storage, google-cloud-pubsub,
+# requests, crcmod, …)
+-r requirements.txt
+
+# ── Test framework ────────────────────────────────────────────────────────────
+pytest==8.2.0
+pytest-mock==3.14.0
+
+# ── Code quality ──────────────────────────────────────────────────────────────
+black==24.4.2
+isort==5.13.2
+flake8==7.0.0
+
+# ── Dev script dependencies ───────────────────────────────────────────────────
+# google-cloud-logging: used by scripts/generate_test_log.py for the
+# --write_to_cloud_logging flag (submits fake log entries via the Logging API).
+# Not required by the Dataflow pipeline itself.
+google-cloud-logging==3.10.0
