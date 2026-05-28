@@ -25,12 +25,20 @@ resource "google_project_iam_member" "df_worker_monitoring" {
   member  = "serviceAccount:${google_service_account.df_worker.email}"
 }
 
-# ── Pub/Sub subscription ──────────────────────────────────────────────────────
-# Grant subscriber access to the existing debug-sub subscription
+# ── Pub/Sub subscriptions ─────────────────────────────────────────────────────
 
+# Subscriber access on the production ingest subscription
 resource "google_pubsub_subscription_iam_member" "df_worker_pubsub_subscriber" {
   project      = var.project_id
-  subscription = "debug-sub"
+  subscription = google_pubsub_subscription.df_ingest.name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${google_service_account.df_worker.email}"
+}
+
+# Subscriber access on the debug subscription (kept for ad-hoc testing)
+resource "google_pubsub_subscription_iam_member" "df_worker_debug_sub_subscriber" {
+  project      = var.project_id
+  subscription = google_pubsub_subscription.debug_sub.name
   role         = "roles/pubsub.subscriber"
   member       = "serviceAccount:${google_service_account.df_worker.email}"
 }
